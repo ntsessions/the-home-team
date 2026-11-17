@@ -2,7 +2,8 @@
    THE HOME TEAM — site behavior
    - product "photos" (built in HTML so they stay on-brand)
    - gallery + lightbox, edition picker, quantity
-   - Buy Now → checkout (pick payment method) → out of stock → waitlist (Google Form)
+   - Add to cart → cart → Check out; Buy Now → checkout directly
+   - checkout: picking a payment method → out of stock → waitlist (Google Form)
    - cart drawer
    - analytics (GA4 + Microsoft Clarity), off until IDs are in config.js
    ============================================================ */
@@ -279,7 +280,7 @@
       }).join("");
     }
 
-    // CTAs: Buy Now → checkout page; Add to cart → out of stock / waitlist
+    // CTAs: Buy Now → straight to checkout; Add to cart → cart drawer → checkout
     $$("[data-cta]").forEach(function (b) {
       b.addEventListener("click", function () {
         var qty = +($("[data-qty-input]") || {}).value || 1;
@@ -287,7 +288,7 @@
         if (b.dataset.cta.indexOf("buy_now") === 0) {
           location.href = "checkout.html?edition=" + encodeURIComponent(state.edition) + "&qty=" + qty;
         } else {
-          openWaitlist(b.dataset.cta);
+          addToCart(state.edition, qty);
         }
       });
     });
@@ -303,18 +304,27 @@
   function initCheckout() {
     if (!$("[data-checkout]")) return;
     var params = new URLSearchParams(location.search);
-    var ed = params.get("edition");
-    if (EDITION_NAMES[ed]) state.edition = ed;
-    var qty = Math.min(10, Math.max(1, parseInt(params.get("qty"), 10) || 1));
+    var from = params.get("from") === "cart" ? "cart" : "buy_now";
+    var items;
+    if (from === "cart" && getCart().length) {
+      items = getCart();
+    } else {
+      from = "buy_now";
+      var ed = EDITION_NAMES[params.get("edition")] ? params.get("edition") : "activities";
+      items = [{ edition: ed, qty: Math.min(10, Math.max(1, parseInt(params.get("qty"), 10) || 1)) }];
+    }
+    var qty = cartCount(items);
     state.qty = qty;
+    state.edition = items.map(function (it) { return it.edition; }).join("+");
 
-    $("[data-sum-scene]").innerHTML = SCENES[2].build(state.edition);
-    $("[data-sum-qty]").textContent = qty;
-    $("[data-sum-edition]").textContent = EDITION_NAMES[state.edition] + " edition";
-    $("[data-sum-line]").textContent = money(20 * qty);
+    $("[data-sum-items]").innerHTML = items.map(function (it) {
+      return '<div class="sum-item"><div class="sum-thumb"><div class="scene-holder">' + SCENES[2].build(it.edition) +
+        '</div><span class="sum-qty">' + it.qty + '</span></div><div class="sum-name"><strong>Family Card Deck</strong><small>' +
+        EDITION_NAMES[it.edition] + ' edition</small></div><div class="sum-price">' + money(20 * it.qty) + "</div></div>";
+    }).join("");
     $("[data-sum-subtotal]").textContent = money(20 * qty);
     $("[data-sum-total]").textContent = money(20 * qty);
-    track("checkout_view", { edition: state.edition, quantity: qty, value: 20 * qty, currency: "USD" });
+    track("checkout_view", { edition: state.edition, quantity: qty, value: 20 * qty, currency: "USD", source: from });
 
     // discount code: record the attempt, no codes are active yet
     $("[data-discount-form]").addEventListener("submit", function (e) {
@@ -396,13 +406,84 @@
   }
 
   /* ---------------- cart drawer ---------------- */
+  // Cart is saved in this browser (localStorage) so it follows the visitor between pages.
+  // No purchase ever happens: checkout ends at the out-of-stock pop-up.
+  var CART_KEY = "ht_cart";
+  var memCart = [];
+  function getCart() {
+    try {
+      var c = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      if (Array.isArray(c)) return c.filter(function (it) { return EDITION_NAMES[it.edition] && it.qty > 0; });
+    } catch (e) {}
+    return memCart;
+  }
+  function saveCart(c) {
+    memCart = c;
+    try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch (e) {}
+    renderCart();
+  }
+  function cartCount(c) { return (c || getCart()).reduce(function (n, it) { return n + it.qty; }, 0); }
+  function addToCart(edition, qty) {
+    var c = getCart(), found = false;
+    c.forEach(function (it) { if (it.edition === edition) { it.qty = Math.min(10, it.qty + qty); found = true; } });
+    if (!found) c.push({ edition: edition, qty: Math.min(10, qty) });
+    saveCart(c);
+    track("add_to_cart", { edition: edition, quantity: qty, value: 20 * qty, currency: "USD" });
+    openCart("add_to_cart");
+  }
+  function openCart(source) {
+    var d = $("[data-drawer]"); if (!d) return;
+    renderCart();
+    d.hidden = false;
+    track("cart_open", { source: source || "header", quantity: cartCount() });
+  }
+  function renderCart() {
+    var c = getCart(), n = cartCount(c);
+    $$("[data-cart-count]").forEach(function (el) { el.textContent = n; el.classList.toggle("has-items", n > 0); });
+    var body = $("[data-drawer] .drawer-body"); if (!body) return;
+    body.classList.toggle("has-items", n > 0);
+    if (!n) {
+      body.innerHTML = '<svg class="icon big-icon"><use href="#i-bag"/></svg><p>Your cart is empty.</p>' +
+        '<a class="btn btn-primary" href="index.html">Shop the deck</a>';
+      return;
+    }
+    body.innerHTML = '<div class="cart-items">' + c.map(function (it, i) {
+      return '<div class="cart-item"><div class="sum-thumb"><div class="scene-holder">' + SCENES[2].build(it.edition) + '</div></div>' +
+        '<div class="cart-info"><strong>Family Card Deck</strong><small>' + EDITION_NAMES[it.edition] + ' edition</small>' +
+        '<div class="qty qty-sm"><button type="button" data-cart-qty="' + i + '" data-d="-1" aria-label="Decrease quantity">−</button>' +
+        '<span>' + it.qty + '</span><button type="button" data-cart-qty="' + i + '" data-d="1" aria-label="Increase quantity">+</button></div>' +
+        '<button type="button" class="cart-remove" data-cart-remove="' + i + '">Remove</button></div>' +
+        '<div class="sum-price">' + money(20 * it.qty) + "</div></div>";
+    }).join("") + "</div>" +
+      '<div class="cart-foot"><div class="cart-subtotal"><span>Subtotal</span><strong>' + money(20 * n) + "</strong></div>" +
+      '<p class="small muted">Shipping is calculated at checkout.</p>' +
+      '<a class="btn btn-primary btn-block" href="checkout.html?from=cart" data-cart-checkout>Check out</a></div>';
+  }
   function initCart() {
     var drawer = $("[data-drawer]");
     if (!drawer) return;
+    renderCart();
     $$("[data-open-cart]").forEach(function (b) {
-      b.addEventListener("click", function () { drawer.hidden = false; track("cart_open"); });
+      b.addEventListener("click", function () { openCart("header"); });
     });
     $$("[data-close-cart]").forEach(function (b) { b.addEventListener("click", function () { drawer.hidden = true; }); });
+    drawer.addEventListener("click", function (e) {
+      var q = e.target.closest("[data-cart-qty]"), r = e.target.closest("[data-cart-remove]");
+      var co = e.target.closest("[data-cart-checkout]");
+      var c = getCart();
+      if (q) {
+        var it = c[+q.dataset.cartQty]; if (!it) return;
+        it.qty = Math.min(10, Math.max(1, it.qty + +q.dataset.d));
+        saveCart(c);
+        track("cart_quantity_change", { edition: it.edition, quantity: it.qty });
+      } else if (r) {
+        var gone = c.splice(+r.dataset.cartRemove, 1)[0];
+        saveCart(c);
+        if (gone) track("remove_from_cart", { edition: gone.edition, quantity: gone.qty });
+      } else if (co) {
+        track("begin_checkout", { quantity: cartCount(c), value: 20 * cartCount(c), currency: "USD", source: "cart" });
+      }
+    });
   }
 
   /* ---------------- every click ----------------
