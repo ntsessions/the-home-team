@@ -415,7 +415,7 @@
     var named = el.tagName === "LABEL" && el.querySelector("strong"); // option cards: use the name only
     var label = el.getAttribute("data-track") || el.getAttribute("aria-label") ||
       ((named || el).textContent || "").replace(/\s+/g, " ").trim();
-    track("click", {
+    track("button_click", {
       element: el.tagName.toLowerCase(),
       label: label.slice(0, 60) || "(no label)",
       link: el.tagName === "A" ? el.getAttribute("href") : "",

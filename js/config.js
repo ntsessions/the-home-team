@@ -18,7 +18,7 @@ window.HT_CONFIG = {
 
   // Google Analytics 4 "Measurement ID", looks like G-XXXXXXXXXX.
   // Create it with a PERSONAL/school Google account.
-  ga4Id: "",
+  ga4Id: "G-7KZLSWYWWF",
 
   // Microsoft Clarity project ID (heat maps + recordings), looks like abc123xyz.
   clarityId: "zeveirryoe",
