@@ -1,0 +1,24 @@
+.about-hero { background: var(--orange); padding-block: clamp(3.5rem, 8vw, 6rem); position: relative; }
+.about-hero::before {
+  content: ""; position: absolute; inset: 14px; border: 2px solid var(--orange-dk); border-radius: 6px; pointer-events: none;
+}
+.about-hero-inner { text-align: center; max-width: 760px; position: relative; }
+.about-hero .eyebrow { color: #6e3a10; }
+.about-hero h1 { font-family: var(--font-display); text-transform: uppercase; font-size: clamp(2rem, 5vw, 3.3rem); margin-bottom: 1rem; }
+.about-lede { font-size: clamp(1.05rem, 2vw, 1.3rem); color: #3b2a1c; margin: 0; }
+
+.about-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(2rem, 5vw, 4.5rem); padding-block: 4.5rem; align-items: start; }
+.story p { font-size: 1.1rem; color: var(--ink-2); line-height: 1.7; }
+.story p:first-child::first-letter {
+  font-family: var(--font-display); float: left; font-size: 3.4rem; line-height: .9; padding: .2rem .5rem 0 0; color: var(--orange-dk);
+}
+.values { display: grid; gap: 1rem; }
+.value { border-radius: var(--radius); padding: 1.4rem 1.5rem; position: relative; }
+.value::before { content: ""; position: absolute; inset: 7px; border: 1.5px solid var(--dk); border-radius: 8px; pointer-events: none; }
+.value h3 { font-family: var(--font-display); text-transform: uppercase; font-size: 1.05rem; margin-bottom: .3rem; }
+.value p { margin: 0; color: var(--ink-2); }
+.v-yellow { background: var(--yellow); --dk: var(--yellow-dk); }
+.v-green { background: var(--green); --dk: var(--green-dk); }
+.v-coral { background: var(--coral); --dk: var(--coral-dk); }
+
+@media (max-width: 860px) { .about-body { grid-template-columns: 1fr; } }
