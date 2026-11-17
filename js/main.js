@@ -245,7 +245,7 @@
     $$('input[name="edition"]').forEach(function (r) {
       r.addEventListener("change", function () {
         state.edition = r.value;
-        $("[data-edition-label]").textContent = EDITION_NAMES[r.value];
+        var edLabel = $("[data-edition-label]"); if (edLabel) edLabel.textContent = EDITION_NAMES[r.value];
         if (state.scene !== 0 && state.scene !== 2) state.scene = 0;
         renderGallery();
         track("edition_select", { edition: r.value });
