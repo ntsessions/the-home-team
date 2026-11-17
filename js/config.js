@@ -21,7 +21,7 @@ window.HT_CONFIG = {
   ga4Id: "",
 
   // Microsoft Clarity project ID (heat maps + recordings), looks like abc123xyz.
-  clarityId: "",
+  clarityId: "zeveirryoe",
 
   // Waitlist → Google Form (personal/school account). Leave blank to
   // preview locally — the form will still show its thank-you message.
