@@ -27,5 +27,5 @@ window.HT_CONFIG = {
   // Waitlist Apps Script here (see dashboard/SETUP.md). It looks like
   // https://script.google.com/macros/s/XXXX/exec
   // Leave blank to preview locally: the thank-you message still shows.
-  waitlistUrl: ""
+  waitlistUrl: "https://script.google.com/macros/s/AKfycbwhx7f9tFvB6maXisG2EkCdrTBLYbpO4IPSD3xtdyRidIDJxnc7Jh-sMZSsFF5TNPAy/exec"
 };
