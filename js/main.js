@@ -3,7 +3,7 @@
    - product "photos" (built in HTML so they stay on-brand)
    - gallery + lightbox, edition picker, quantity
    - Add to cart → cart → Check out; Buy Now → checkout directly
-   - checkout: picking a payment method → out of stock → waitlist (Google Form)
+   - checkout: picking a payment method → out of stock → waitlist (Google Sheet via Apps Script)
    - cart drawer
    - analytics (GA4 + Microsoft Clarity), off until IDs are in config.js
    ============================================================ */
@@ -387,16 +387,19 @@
       $("[data-form-error]").hidden = ok;
       if (!ok) { track("waitlist_invalid_email"); return; }
 
-      var gf = CFG.googleForm || {};
-      if (gf.action && gf.emailField) {
-        var fd = new FormData();
-        fd.append(gf.emailField, email);
-        if (gf.editionField) fd.append(gf.editionField, EDITION_NAMES[state.edition]);
-        if (gf.versionField) fd.append(gf.versionField, VERSION);
-        if (gf.paymentField && state.payment) fd.append(gf.paymentField, state.payment);
-        fetch(gf.action, { method: "POST", mode: "no-cors", body: fd }).catch(function () {});
+      // Saved to the private waitlist Google Sheet through Apps Script.
+      if (CFG.waitlistUrl) {
+        var body = new URLSearchParams({
+          email: email,
+          edition: String(state.edition).split("+").map(function (k) { return EDITION_NAMES[k] || k; }).join(" + "),
+          payment: state.payment || "",
+          version: VERSION,
+          source: lastSource || "",
+          website: (form.elements.website && form.elements.website.value) || ""
+        });
+        fetch(CFG.waitlistUrl, { method: "POST", mode: "no-cors", keepalive: true, body: body }).catch(function () {});
       } else if (window.console) {
-        console.info("[waitlist] Google Form not configured yet — would have saved:", email, state.edition);
+        console.info("[waitlist] Sheet not connected yet. Would have saved:", email, state.edition);
       }
       track("waitlist_submit", { edition: state.edition, source: lastSource, method: state.payment || "" });
       input.value = "";

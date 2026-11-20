@@ -23,13 +23,9 @@ window.HT_CONFIG = {
   // Microsoft Clarity project ID (heat maps + recordings), looks like abc123xyz.
   clarityId: "zeveirryoe",
 
-  // Waitlist → Google Form (personal/school account). Leave blank to
-  // preview locally — the form will still show its thank-you message.
-  googleForm: {
-    action: "",        // https://docs.google.com/forms/d/e/XXXX/formResponse
-    emailField: "",    // entry.123456789
-    editionField: "",  // entry.987654321  (optional)
-    versionField: "",  // entry.555555555  (optional)
-    paymentField: ""   // entry.444444444  (optional: card / venmo / gift_card)
-  }
+  // Waitlist → Google Sheet. Paste the "Web app URL" of the Home Team
+  // Waitlist Apps Script here (see dashboard/SETUP.md). It looks like
+  // https://script.google.com/macros/s/XXXX/exec
+  // Leave blank to preview locally: the thank-you message still shows.
+  waitlistUrl: ""
 };
